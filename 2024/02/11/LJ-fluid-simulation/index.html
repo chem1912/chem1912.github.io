@@ -1,0 +1,824 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.ico">
+  <link rel="icon" href="/img/myfavicon.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Graminilune">
+  <meta name="keywords" content="Animation,Music,Science,Wondering">
+  
+    <meta name="description" content="一个简单的demo，用Python实现在NVT系综中Lennard-Jones流体的分子动力学模拟。原理见Molecular Dynamics in NVT ensemble一文。 Code: 参数设置和变量初始化 12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A Python Demo for MD simulation of Lennard-Jones Fluid in NVT Ensemble">
+<meta property="og:url" content="http://example.com/2024/02/11/LJ-fluid-simulation/index.html">
+<meta property="og:site_name" content="Graminilune&#39;s Blog">
+<meta property="og:description" content="一个简单的demo，用Python实现在NVT系综中Lennard-Jones流体的分子动力学模拟。原理见Molecular Dynamics in NVT ensemble一文。 Code: 参数设置和变量初始化 12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/chem1912/blog_picture/article_img/sp1.png">
+<meta property="article:published_time" content="2024-02-11T03:01:00.000Z">
+<meta property="article:modified_time" content="2025-02-06T17:26:22.272Z">
+<meta property="article:author" content="Graminilune">
+<meta property="article:tag" content="Molecular Dynamics">
+<meta property="article:tag" content="Statistical Mechanics">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/chem1912/blog_picture/article_img/sp1.png">
+  
+  
+  
+  <title>A Python Demo for MD simulation of Lennard-Jones Fluid in NVT Ensemble - Graminilune&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null},"gtag":null,"woyaola":null,"cnzz":null},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Graminilune&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://cdn.jsdelivr.net/gh/chem1912/blog_picture/article_img/sp1.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="A Python Demo for MD simulation of Lennard-Jones Fluid in NVT Ensemble"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-02-11 11:01" pubdate>
+          February 11, 2024 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          <!-- compatible with older versions-->
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">A Python Demo for MD simulation of Lennard-Jones Fluid in NVT Ensemble</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>一个简单的demo，用Python实现在NVT系综中Lennard-Jones流体的分子动力学模拟。原理见Molecular
+Dynamics in NVT ensemble一文。</p>
+<h1 id="code-参数设置和变量初始化">Code: 参数设置和变量初始化</h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><span class="hljs-keyword">import</span> matplotlib.pyplot <span class="hljs-keyword">as</span> plt<br><span class="hljs-keyword">from</span> math <span class="hljs-keyword">import</span> sinh, exp, sqrt, pi<br><span class="hljs-keyword">from</span> numpy <span class="hljs-keyword">import</span> log, sin, cos<br>        <br><span class="hljs-keyword">def</span> <span class="hljs-title function_">setParm</span>(<span class="hljs-params">dti,nthermoi,nstepi,Ni,T0i,Mi,taoi</span>):<br>    <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">    :: setParm(dti,nthermoi,nstepi,T0i,Mi,taoi,x0i,mi,omegai)</span><br><span class="hljs-string">    set up the simulation parameters directly</span><br><span class="hljs-string"></span><br><span class="hljs-string">    dti:  the time step (ps)</span><br><span class="hljs-string">    nthermoi:  the proportion that dt/dt(NHC)</span><br><span class="hljs-string">    nstepi:   the number of the simulation steps</span><br><span class="hljs-string">    Ni： the number of particles</span><br><span class="hljs-string">    T0i:   the target temperature (K)</span><br><span class="hljs-string">    Mi:  the number of thermostats</span><br><span class="hljs-string">    taoi:   the character time scale &#x27;tao&#x27;(ps)</span><br><span class="hljs-string">    &#x27;&#x27;&#x27;</span><br>    <span class="hljs-keyword">global</span> k<br>    k=<span class="hljs-number">0.0083144621</span>  <span class="hljs-comment"># MD单位下的玻尔兹曼常数</span><br>    <span class="hljs-comment">#注意：函数内可以使用全局变量但不能修改，除非函数开头加global关键字声明</span><br>    <span class="hljs-keyword">global</span> dt<br>    <span class="hljs-keyword">global</span> nthermo<br>    <span class="hljs-keyword">global</span> dtmo<br>    <span class="hljs-keyword">global</span> nstep<br>    <span class="hljs-keyword">global</span> T0<br>    <span class="hljs-keyword">global</span> M<br>    <span class="hljs-keyword">global</span> Q<br>    <span class="hljs-keyword">global</span> N<br><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Set up the simulation paramaters&quot;</span>)<br>    dt=dti<br>    nthermo=nthermoi<br>    dtmo=np.zeros(<span class="hljs-number">7</span>)<br>    <span class="hljs-keyword">for</span> ntt <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">7</span>): <br>        dtmo[<span class="hljs-number">0</span>]= <span class="hljs-number">0.784513610477560</span>*dt/nthermo<br>        dtmo[<span class="hljs-number">6</span>]= dtmo[<span class="hljs-number">0</span>]<br>        dtmo[<span class="hljs-number">1</span>]= <span class="hljs-number">0.235573213359357</span>*dt/nthermo<br>        dtmo[<span class="hljs-number">5</span>]= dtmo[<span class="hljs-number">1</span>]<br>        dtmo[<span class="hljs-number">2</span>]= -<span class="hljs-number">1.17767998417887</span>*dt/nthermo<br>        dtmo[<span class="hljs-number">4</span>]= dtmo[<span class="hljs-number">2</span>]<br>        dtmo[<span class="hljs-number">3</span>]= (<span class="hljs-number">1</span>-(<span class="hljs-number">0.784513610477560</span>-<span class="hljs-number">0.235573213359357</span>+<span class="hljs-number">1.17767998417887</span>)*<span class="hljs-number">2</span>)*dt/nthermo<br>    nstep=nstepi<br>    N=Ni<br>    T0=T0i<br>    M=Mi<br>    tao=taoi<br>    Q=np.zeros(M)<br>    Q[<span class="hljs-number">0</span>]=<span class="hljs-number">3</span>*N*k*T0*tao*tao<br>    <span class="hljs-keyword">for</span> m <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">1</span>,M):<br>        Q[m]=k*T0*tao*tao<br>  <br>    <br><span class="hljs-keyword">def</span> <span class="hljs-title function_">setBC</span>():<br>    <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">    setting up the boundary condition</span><br><span class="hljs-string">    &#x27;&#x27;&#x27;</span><br>    <span class="hljs-keyword">global</span> pbc<br>    bcType=<span class="hljs-built_in">input</span>(<span class="hljs-string">&quot;the type of periodic boundary condition (e.g. &#x27;cubic&#x27;,&#x27;rectangle&#x27;,&#x27;noPBC&#x27;): &quot;</span>)<br>    <span class="hljs-keyword">if</span> bcType!=<span class="hljs-string">&quot;noPBC&quot;</span>:<br>        <span class="hljs-keyword">global</span> lxbox<br>        <span class="hljs-keyword">global</span> lybox<br>        <span class="hljs-keyword">global</span> lzbox<br>        <span class="hljs-keyword">if</span> bcType==<span class="hljs-string">&quot;cubic&quot;</span>:<br>            lxbox=<span class="hljs-built_in">float</span>(<span class="hljs-built_in">input</span>(<span class="hljs-string">&quot;the length of the cubic box (nm): &quot;</span>))<br>            lybox=lxbox<br>            lzbox=lxbox<br>        <span class="hljs-keyword">else</span>:<br>            lxbox=<span class="hljs-built_in">float</span>(<span class="hljs-built_in">input</span>(<span class="hljs-string">&quot;the x length of the box (nm): &quot;</span>))<br>            lybox=<span class="hljs-built_in">float</span>(<span class="hljs-built_in">input</span>(<span class="hljs-string">&quot;the y length of the box (nm): &quot;</span>))<br>            lzbox=<span class="hljs-built_in">float</span>(<span class="hljs-built_in">input</span>(<span class="hljs-string">&quot;the z length of the box (nm): &quot;</span>))<br>        pbc=[bcType,lxbox,lybox,lzbox]<br>    <span class="hljs-keyword">else</span>:<br>        pbc=[]<br><span class="hljs-keyword">def</span> <span class="hljs-title function_">initial_position</span>():<br>    <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">    initialization of the particle positions: a N*3 array</span><br><span class="hljs-string">    only for monatomic system with single componment, N=a^3</span><br><span class="hljs-string">    &#x27;&#x27;&#x27;</span><br>    <span class="hljs-keyword">global</span> r<br>    r=np.zeros([N,<span class="hljs-number">3</span>])<br>    a=<span class="hljs-built_in">pow</span>(N,<span class="hljs-number">1</span>/<span class="hljs-number">3</span>)<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">1</span>,N+<span class="hljs-number">1</span>):<br>        r[i-<span class="hljs-number">1</span>]=np.array([(i%(a*a))%a,(i%(a*a))//a,i//(a*a)])*lxbox/a<br>        r[i-<span class="hljs-number">1</span>][<span class="hljs-number">0</span>]=r[i-<span class="hljs-number">1</span>][<span class="hljs-number">0</span>]-lxbox*<span class="hljs-built_in">round</span>(r[i-<span class="hljs-number">1</span>][<span class="hljs-number">0</span>]/lxbox)<br>        r[i-<span class="hljs-number">1</span>][<span class="hljs-number">1</span>]=r[i-<span class="hljs-number">1</span>][<span class="hljs-number">1</span>]-lybox*<span class="hljs-built_in">round</span>(r[i-<span class="hljs-number">1</span>][<span class="hljs-number">1</span>]/lybox)<br>        r[i-<span class="hljs-number">1</span>][<span class="hljs-number">2</span>]=r[i-<span class="hljs-number">1</span>][<span class="hljs-number">2</span>]-lzbox*<span class="hljs-built_in">round</span>(r[i-<span class="hljs-number">1</span>][<span class="hljs-number">2</span>]/lzbox)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">initial_velocity</span>(<span class="hljs-params">Ti</span>):<br>    <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">    initialization of the particle velocity according to the MB distribution (it&#x27;s unnecessary)</span><br><span class="hljs-string">    </span><br><span class="hljs-string">    &#x27;&#x27;&#x27;</span><br>    <span class="hljs-keyword">global</span> velocity<br>    <span class="hljs-keyword">global</span> KE<br>    <span class="hljs-keyword">global</span> T<br>    velocity = np.zeros([N,<span class="hljs-number">3</span>])<br>    T=Ti<br>    sigma=sqrt(k*T/m[<span class="hljs-number">0</span>])<br>    np.random.seed(<span class="hljs-number">19015601</span>)<br>    ran1 = np.random.rand(N)<br>    ran2 = np.random.rand(N)<br>    ran3 = np.random.rand(N)<br>    velocity[:,<span class="hljs-number">0</span>]= sigma*np.sqrt(-<span class="hljs-number">2</span>*log(<span class="hljs-number">1</span>-ran2))*cos(<span class="hljs-number">2</span>*pi*ran1)<br>    velocity[:,<span class="hljs-number">1</span>]= velocity[:,<span class="hljs-number">0</span>]/cos(<span class="hljs-number">2</span>*pi*ran1)*sin(<span class="hljs-number">2</span>*pi*ran1)<br>    velocity[:,<span class="hljs-number">2</span>]=sigma*np.sqrt(-<span class="hljs-number">2</span>*log(<span class="hljs-number">1</span>-ran2))*cos(<span class="hljs-number">2</span>*pi*ran3)<br><br>    sumv=<span class="hljs-built_in">sum</span>(<span class="hljs-built_in">sum</span>(velocity))<br>    velocity=velocity-sumv/(N*<span class="hljs-number">3</span>)<br>    sumv2=<span class="hljs-number">0</span><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(N):<br>        sumv2=sumv2+<span class="hljs-built_in">sum</span>(velocity[i]*velocity[i])*m[i]<br>    fs=sqrt(<span class="hljs-number">3</span>*N*k*T/sumv2)<br>    velocity*=fs<br><br>    KE=<span class="hljs-number">0.5</span>*<span class="hljs-number">3</span>*N*k*T<br><br>    <br><span class="hljs-keyword">def</span> <span class="hljs-title function_">initial_G</span>():<br>    <span class="hljs-keyword">global</span> G<br>    G=np.zeros(M)<br>    G[<span class="hljs-number">0</span>]=<span class="hljs-number">3</span>*N*k*(T-T0)<br>    <span class="hljs-keyword">for</span> ng <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">1</span>,M):<br>        G[ng]=(Q[ng-<span class="hljs-number">1</span>]*vEta[ng-<span class="hljs-number">1</span>]*vEta[ng-<span class="hljs-number">1</span>]-k*T0)/Q[ng]<br><span class="hljs-keyword">def</span> <span class="hljs-title function_">initial_nhc</span>(<span class="hljs-params">label</span>):<br>    <span class="hljs-keyword">global</span> eta<br>    <span class="hljs-keyword">global</span> vEta<br>    <span class="hljs-keyword">if</span> label==<span class="hljs-string">&quot;random&quot;</span>:      <br>        np.random.seed(<span class="hljs-number">19588801</span>)<br>        eta = np.random.rand(M)<br>        vEta = np.random.rand(M)<br>    <span class="hljs-keyword">elif</span> label==<span class="hljs-string">&quot;zero&quot;</span>:<br>        eta=np.zeros(M)<br>        vEta=np.zeros(M)<br></code></pre></td></tr></table></figure>
+<h1 id="code-单步积分器">Code: 单步积分器</h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">NHCstep</span>():<br>    <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">    solve the Nosé-Hoover Chain equations using &quot;explict rversible intergrators in a single step</span><br><span class="hljs-string">    changed global variable：particle positions N*3 : r; particle velosity N*3: velocity; physical forces N*3: Force; </span><br><span class="hljs-string">              M* eta; M* vEta; thermostat forces M* G ; potential energy UE.</span><br><span class="hljs-string">              kinetic energy KE, instantaneous temperature T (but not be calculated in this function)</span><br><span class="hljs-string">    &#x27;&#x27;&#x27;</span><br>    <span class="hljs-keyword">for</span> nweight <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">7</span>):<br>        <span class="hljs-keyword">for</span> ns <span class="hljs-keyword">in</span> np.arange(nthermo):<br>            Soperator(dtmo[nweight])<br>    vverletStep()<br>    <span class="hljs-keyword">for</span> nweight <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">7</span>):<br>        <span class="hljs-keyword">for</span> ns <span class="hljs-keyword">in</span> np.arange(nthermo):<br>            Soperator(dtmo[nweight])<br><span class="hljs-keyword">def</span> <span class="hljs-title function_">Soperator</span>(<span class="hljs-params">tm</span>):<br>    <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">    tm : the time step of each weight in the exp(iLnhc)</span><br><span class="hljs-string">    &#x27;&#x27;&#x27;</span><br>    <span class="hljs-keyword">global</span> vEta<br>    <span class="hljs-keyword">global</span> G<br>    <span class="hljs-keyword">global</span> eta<br>    <span class="hljs-keyword">global</span> velocity<br>    <span class="hljs-keyword">global</span> T<br>    <span class="hljs-keyword">global</span> KE<br><br>    vEta[M-<span class="hljs-number">1</span>]+=G[M-<span class="hljs-number">1</span>]*tm/<span class="hljs-number">4</span><br>    <span class="hljs-keyword">for</span> jj <span class="hljs-keyword">in</span> np.flipud(np.arange(M-<span class="hljs-number">1</span>)):        <span class="hljs-comment">#逆向序列 [M-2,M-3,...,0]</span><br>        vt_tmp=tm/<span class="hljs-number">8</span>*vEta[jj+<span class="hljs-number">1</span>]<br>        vEta[jj]*=exp(-vt_tmp)<br>        vEta[jj]+=tm/<span class="hljs-number">4</span>*G[jj]                  <span class="hljs-comment">#exect:  *sinh(vt_tmp)/(vt_tmp)</span><br>        vEta[jj]*=exp(-vt_tmp)<br>        G[jj+<span class="hljs-number">1</span>]=(Q[jj]*vEta[jj]*vEta[jj]-k*T0)/Q[jj+<span class="hljs-number">1</span>]<br>    <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> np.arange(M):<br>        eta[j]+=tm/<span class="hljs-number">2</span>*vEta[j]<br>    KE=<span class="hljs-number">0</span><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(N):<br>        velocity[i]*=exp(-tm/<span class="hljs-number">2</span>*vEta[<span class="hljs-number">0</span>])<br>        KE+= m[i]*<span class="hljs-built_in">sum</span>(velocity[i]*velocity[i])<br>    T=KE/(<span class="hljs-number">3</span>*N*k)<br>    G[<span class="hljs-number">0</span>]=<span class="hljs-number">3</span>*N*k*(T-T0)<br>    KE*=<span class="hljs-number">0.5</span><br>    <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> np.arange(M-<span class="hljs-number">1</span>):<br>        vt_tmp=tm/<span class="hljs-number">8</span>*vEta[j+<span class="hljs-number">1</span>]<br>        vEta[j]*=exp(-vt_tmp)<br>        vEta[j]+=tm/<span class="hljs-number">4</span>*G[j]                    <span class="hljs-comment">#exect:    *sinh(vt_tmp)/(vt_tmp)</span><br>        vEta[j]*=exp(-vt_tmp)<br>        G[j+<span class="hljs-number">1</span>]=(Q[j]*vEta[j]*vEta[j]-k*T0)/Q[j+<span class="hljs-number">1</span>]<br>    vEta[M-<span class="hljs-number">1</span>]+=G[M-<span class="hljs-number">1</span>]*tm/<span class="hljs-number">4</span><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">vverletStep</span>():<br>    <span class="hljs-keyword">global</span> velocity<br>    <span class="hljs-keyword">global</span> r<br>    <span class="hljs-keyword">global</span> T<br>    <span class="hljs-keyword">global</span> KE<br>    KE=<span class="hljs-number">0</span><br><br>    <span class="hljs-keyword">if</span> pbc!=[]:<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(N):<br>            velocity[i]+=dt/<span class="hljs-number">2</span>*Force[i]/m[i]<br>            r[i]+=dt*velocity[i]<br>            r[i][<span class="hljs-number">0</span>]=r[i][<span class="hljs-number">0</span>]-lxbox*<span class="hljs-built_in">round</span>(r[i][<span class="hljs-number">0</span>]/lxbox)<br>            r[i][<span class="hljs-number">1</span>]=r[i][<span class="hljs-number">1</span>]-lybox*<span class="hljs-built_in">round</span>(r[i][<span class="hljs-number">1</span>]/lybox)<br>            r[i][<span class="hljs-number">2</span>]=r[i][<span class="hljs-number">2</span>]-lzbox*<span class="hljs-built_in">round</span>(r[i][<span class="hljs-number">2</span>]/lzbox)<br>        LJforce()<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(N):<br>            velocity[i]+=dt/<span class="hljs-number">2</span>*Force[i]/m[i]<br>            KE+=m[i]*<span class="hljs-built_in">sum</span>(velocity[i]*velocity[i])<br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(N):<br>            velocity[i]+=dt/<span class="hljs-number">2</span>*Force[i]/m[i]<br>            r[i]+=dt*velocity[i]        <br>        LJforce()<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(N):<br>            velocity[i]+=dt/<span class="hljs-number">2</span>*Force[i]/m[i]<br>            KE+=m[i]*<span class="hljs-built_in">sum</span>(velocity[i]*velocity[i])<br>    T=KE/(<span class="hljs-number">3</span>*N*k)<br>    G[<span class="hljs-number">0</span>]=<span class="hljs-number">3</span>*N*k*(T-T0)<br>    KE*=<span class="hljs-number">0.5</span>   <br></code></pre></td></tr></table></figure>
+<h1 id="力与势能的计算">力与势能的计算</h1>
+<ul>
+<li>Lennard-Jones Potential</li>
+</ul>
+<p><span class="math display">\[
+U^{LJ}(r_{ij})=4\epsilon
+\bigl(\frac{\sigma^{12}}{r_{ij}^{12}}-\frac{\sigma^6}{r_{ij}^6}\bigr)\\
+r_{ij}=\sqrt{(x_i-x_j)^2+(y_i-y_j)^2+(z_i-z_j)^2}
+\]</span></p>
+<p>Force <span class="math display">\[
+Fx_i=-\frac{\partial U^{LJ}(r_{ij})}{\partial x_i}=4\epsilon
+\bigl(\frac{12\sigma^{12}}{r_{ij}^{13}}-\frac{6\sigma^6}{r_{ij}^7}\bigr)\cdot\frac{x_i}{r_{ij}}
+\]</span> Extreme point <span class="math display">\[
+r_m=\sqrt[6]{2}\,\sigma
+\]</span></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> matplotlib.pyplot <span class="hljs-keyword">as</span> plt<br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br>plt.figure(dpi=<span class="hljs-number">100</span>)<br>r=np.linspace(<span class="hljs-number">0.3</span>,<span class="hljs-number">1.5</span>,<span class="hljs-number">1000</span>)<br>u12=<span class="hljs-number">4</span>*(<span class="hljs-number">0.3405</span>/r)**<span class="hljs-number">12</span><br>u6=-<span class="hljs-number">4</span>*(<span class="hljs-number">0.3405</span>/r)**<span class="hljs-number">6</span><br>u=u12+u6<br>plt.xlabel(<span class="hljs-string">&quot;r/nm&quot;</span>)<br>plt.xlim(<span class="hljs-number">0</span>,<span class="hljs-number">1.5</span>)<br>plt.ylabel(<span class="hljs-string">&quot;U(r)/(kJ/mol)&quot;</span>)<br>plt.ylim([-<span class="hljs-number">1.5</span>,<span class="hljs-number">1.5</span>])<br>plt.plot(r,u12,label=<span class="hljs-string">&quot;r12 repulsive potential&quot;</span>)<br>plt.plot(r,u6,label=<span class="hljs-string">&quot;r6 attractive potential&quot;</span>)<br>plt.plot(r,u,label=<span class="hljs-string">&quot;Lennard-Jones potential&quot;</span>)<br>plt.text(<span class="hljs-number">0.51</span>,-<span class="hljs-number">1</span>,<span class="hljs-string">&quot;r$_m$=&#123;:.3f&#125;&quot;</span>.<span class="hljs-built_in">format</span>(<span class="hljs-number">0.3405</span>*<span class="hljs-built_in">pow</span>(<span class="hljs-number">2</span>,<span class="hljs-number">1</span>/<span class="hljs-number">6</span>)))<br>plt.show()<br><br></code></pre></td></tr></table></figure>
+<p><img src="/2024/02/11/LJ-fluid-simulation/image-20250207011425727.png" srcset="/img/loading.gif" lazyload alt="image-20250207011425727" style="zoom: 80%;"></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">LJtopology</span>(<span class="hljs-params">elji,sigmalji,rci</span>):<br>    <span class="hljs-keyword">global</span> sigmalj<br>    <span class="hljs-keyword">global</span> sigmalj6<br>    <span class="hljs-keyword">global</span> elj<br>    <span class="hljs-keyword">global</span> rc2  <span class="hljs-comment"># cutoff  radial</span><br>    <span class="hljs-keyword">global</span> ecut<br>    <br>    elj=elji<br>    sigmalj=sigmalji<br>    rc=rci<br>    rc2=rc*rc<br>    sigmalj6=sigmalj**<span class="hljs-number">6</span><br>    sir=sigmalj6/(rc2**<span class="hljs-number">3</span>)<br>    ecut=<span class="hljs-number">4</span>*elj*sir*(sir-<span class="hljs-number">1</span>)<br>    <br><span class="hljs-keyword">def</span> <span class="hljs-title function_">LJforce</span>():<br>    <span class="hljs-keyword">global</span> Force<br>    <span class="hljs-keyword">global</span> UE<br>    <br>    <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">    simple cutoff sheme, rc &lt;= min(lbox)/2, calculate Force and Potential energy with minimum image convention rule.</span><br><span class="hljs-string">    &#x27;&#x27;&#x27;</span><br>    Force=np.zeros([N,<span class="hljs-number">3</span>])<br>    UE=<span class="hljs-number">0</span><br>    <span class="hljs-keyword">if</span> pbc==[]:<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(N-<span class="hljs-number">1</span>):<br>            <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> np.arange(i+<span class="hljs-number">1</span>,N):<br>                xr=r[i]-r[j]<br>                r2=<span class="hljs-built_in">sum</span>(xr*xr)<br>                <span class="hljs-keyword">if</span> r2 &lt; rc2:<br>                    r2i=<span class="hljs-number">1</span>/r2<br>                    r6i=r2i**<span class="hljs-number">3</span><br>                    r8i=r6i*r2i<br>                    ff=<span class="hljs-number">48</span>*elj*sigmalj6*r8i*(sigmalj6*r6i-<span class="hljs-number">0.5</span>)*xr<br>                    Force[i]+=ff<br>                    Force[j]+=-ff<br>                    UE+=<span class="hljs-number">4</span>*elj*sigmalj6*r6i*(sigmalj6*r6i-<span class="hljs-number">1</span>)-ecut<br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(N-<span class="hljs-number">1</span>):<br>            <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> np.arange(i+<span class="hljs-number">1</span>,N):<br>                xr=r[i]-r[j]<br>                xr[<span class="hljs-number">0</span>]=xr[<span class="hljs-number">0</span>]-lxbox*<span class="hljs-built_in">round</span>(xr[<span class="hljs-number">0</span>]/lxbox)<br>                xr[<span class="hljs-number">1</span>]=xr[<span class="hljs-number">1</span>]-lybox*<span class="hljs-built_in">round</span>(xr[<span class="hljs-number">1</span>]/lybox)<br>                xr[<span class="hljs-number">2</span>]=xr[<span class="hljs-number">2</span>]-lzbox*<span class="hljs-built_in">round</span>(xr[<span class="hljs-number">2</span>]/lzbox)<br>                r2=<span class="hljs-built_in">sum</span>(xr*xr)<br>                <span class="hljs-keyword">if</span> r2 &lt; rc2:<br>                    r2i=<span class="hljs-number">1</span>/r2<br>                    r6i=r2i**<span class="hljs-number">3</span><br>                    r8i=r6i*r2i<br>                    ff=<span class="hljs-number">48</span>*elj*sigmalj6*r8i*(sigmalj6*r6i-<span class="hljs-number">0.5</span>)*xr<br>                    Force[i]+=ff<br>                    Force[j]+=-ff<br>                    UE+=<span class="hljs-number">4</span>*elj*sigmalj6*r6i*(sigmalj6*r6i-<span class="hljs-number">1</span>)-ecut  <br></code></pre></td></tr></table></figure>
+<h1 id="参数设置">参数设置</h1>
+<ul>
+<li><p>Simulation parameters: the time step (ps): 0.01 the proportion
+that dt/dt(NHC): 20 the number of the simulation steps: 10000 the number
+of particles: 216 the target temperature (K): 119.8 the number of
+thermostats: 2 the character time scale <span class="math inline">\(\tau\)</span> (ps): 0.2</p></li>
+<li><p>Boundary Condition: cubic box lbox= 2.04 nm</p></li>
+<li><p>Topology: 216 Ar atoms, mass 39.94 g/mol LJ_epsilon: 0.99607
+kJ/mol LJ_sigma: 0.3405 nm Cutoff radial: 1.0 nm</p></li>
+<li><p>Initialization: positions: put the particles on the cubic lattice
+velocities: use Box-Miller method sampling the MB distribution at Ti=110
+K thermostat variables: zeros</p></li>
+<li><p>Dump the T,UE,KE,velocities and positions every step!</p></li>
+</ul>
+<h1 id="code模拟与数据存储">Code：模拟与数据存储</h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#setParm(dti, nthermoi, nstepi,Ni, T0i, Mi, taoi)</span><br>setParm(<span class="hljs-number">0.01</span>, <span class="hljs-number">20</span>, <span class="hljs-number">10000</span>, <span class="hljs-number">216</span>, <span class="hljs-number">119.8</span>, <span class="hljs-number">2</span>, <span class="hljs-number">0.2</span>)<br>setBC()<br>LJtopology(<span class="hljs-number">0.99607</span>, <span class="hljs-number">0.3405</span>, <span class="hljs-number">1.0</span>)<br>mass=<span class="hljs-number">39.94</span><br><span class="hljs-keyword">global</span> m<br>m=np.ones(N)*mass<br><span class="hljs-comment">#初始化</span><br>initial_position()<br>initial_velocity(<span class="hljs-number">110</span>) <br>LJforce()<br>initial_nhc(<span class="hljs-string">&quot;zero&quot;</span>)<br>initial_G()<br><span class="hljs-comment">#模拟</span><br>Ts=np.zeros(nstep+<span class="hljs-number">1</span>)<br>KEs=np.zeros(nstep+<span class="hljs-number">1</span>)<br>UEs=np.zeros(nstep+<span class="hljs-number">1</span>)<br>vstore=np.zeros([nstep+<span class="hljs-number">1</span>,N,<span class="hljs-number">3</span>])<br>xstore=np.zeros([nstep+<span class="hljs-number">1</span>,N,<span class="hljs-number">3</span>])<br>times=np.zeros(nstep+<span class="hljs-number">1</span>)<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Simulation start!&quot;</span>)<br><span class="hljs-keyword">global</span> time<br><span class="hljs-keyword">global</span> ncount<br>ncount=<span class="hljs-number">0</span><br>time=<span class="hljs-number">0</span><br><span class="hljs-keyword">while</span> ncount &lt;= nstep:<br>    Ts[ncount]=T<br>    KEs[ncount]=KE<br>    UEs[ncount]=UE<br>    xstore[ncount]=r<br>    vstore[ncount]=velocity<br>    times[ncount]=time<br>    <span class="hljs-keyword">if</span> ncount%<span class="hljs-number">100</span>==<span class="hljs-number">0</span>:<br>        <span class="hljs-built_in">print</span>([ncount,T,KE,UE])<br>    NHCstep()<br>    time=ncount*dt<br>    ncount=ncount+<span class="hljs-number">1</span><br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Simulation finish!&quot;</span>)<br></code></pre></td></tr></table></figure>
+<pre><code class="hljs">Set up the simulation paramaters
+the type of periodic boundary condition (e.g. &#39;cubic&#39;,&#39;rectangle&#39;,&#39;noPBC&#39;): cubic
+the length of the cubic box (nm): 2.04
+Simulation start!
+[0, 110, 296.327429244, -789.1019846977582]
+... ...
+Simulation finish!</code></pre>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#dump temperature, kinetic, potential and total energy</span><br>file=<span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;./LJsim1_log.txt&quot;</span>,mode=<span class="hljs-string">&#x27;w&#x27;</span>)<br><br><span class="hljs-keyword">for</span> line <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">10001</span>):<br>    file.writelines(<span class="hljs-string">&quot;&#123;nsteps&#125;  &#123;time:.2f&#125;  &#123;T:.14f&#125;  &#123;KE:.14f&#125;  &#123;UE:.14f&#125;  &#123;TE:.14f&#125;\n&quot;</span>.<span class="hljs-built_in">format</span>(nsteps=line,time=times[line],T=Ts[line],KE=KEs[line],UE=UEs[line],TE=KEs[line]+UEs[line]))<br>file.close()<br><br>vfile=<span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;./LJsim1_v.txt&quot;</span>,mode=<span class="hljs-string">&#x27;w&#x27;</span>)<br><span class="hljs-keyword">for</span> step <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">10001</span>):<br>    vfile.writelines(<span class="hljs-string">&quot;&#123;nsteps&#125;  &#123;time:.2f&#125;\n&quot;</span>.<span class="hljs-built_in">format</span>(nsteps=step,time=times[step]))<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">216</span>):<br>        vfile.writelines(<span class="hljs-string">&quot;&#123;vx&#125;  &#123;vy&#125;  &#123;vz&#125;\n&quot;</span>.<span class="hljs-built_in">format</span>(vx=vstore[step,i,<span class="hljs-number">0</span>],vy=vstore[step,i,<span class="hljs-number">1</span>],vz=vstore[step,i,<span class="hljs-number">2</span>]))<br>vfile.close()        <br>xfile=<span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;./LJsim1_x.txt&quot;</span>,mode=<span class="hljs-string">&#x27;w&#x27;</span>)<br><span class="hljs-keyword">for</span> step <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">10001</span>):<br>    xfile.writelines(<span class="hljs-string">&quot;&#123;nsteps&#125;  &#123;time:.2f&#125;\n&quot;</span>.<span class="hljs-built_in">format</span>(nsteps=step,time=times[step]))<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">216</span>):<br>        xfile.writelines(<span class="hljs-string">&quot;&#123;xx&#125;  &#123;xy&#125;  &#123;xz&#125;\n&quot;</span>.<span class="hljs-built_in">format</span>(xx=xstore[step,i,<span class="hljs-number">0</span>],xy=xstore[step,i,<span class="hljs-number">1</span>],xz=xstore[step,i,<span class="hljs-number">2</span>]))<br>xfile.close()<br></code></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#用pickle方法读写数据</span><br><span class="hljs-keyword">import</span> pickle<br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&#x27;LJsim1_vstore.pickle&#x27;</span>, <span class="hljs-string">&#x27;wb&#x27;</span>) <span class="hljs-keyword">as</span> f:<br>    pickle.dump(vstore, f)<br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&#x27;LJsim1_xstore.pickle&#x27;</span>,<span class="hljs-string">&#x27;wb&#x27;</span>) <span class="hljs-keyword">as</span> f:<br>    pickle.dump(xstore,f)<br></code></pre></td></tr></table></figure>
+<h1 id="数据分析与可视化">数据分析与可视化</h1>
+<h2 id="径向分布函数-rdf">径向分布函数 (RDF)</h2>
+<ul>
+<li>原子b对原子a的径向分布函数定义为：</li>
+</ul>
+<p><span class="math display">\[
+g_{ab}(r)=\frac{P_b(r)}{4\pi\rho_br^2dr}
+\]</span></p>
+<p>其中<span class="math inline">\(P_b(r)\)</span>是原子b出现在离原子a距离为<span class="math inline">\([r,r+dr)\)</span>的球形壳层中的概率。故径向分布函数就是径向概率密度除以原子b的平均密度，归一化到<span class="math inline">\(N_b\)</span>。在无限远处 <span class="math inline">\(g_{ab}(\infty)=\rho_b\)</span>。
+实际计算时，首先设定最大距离 <span class="math inline">\(r_{max}
+(&lt;\frac{1}{2}L_{box})\)</span> 和区间数 <span class="math inline">\(N_r\)</span> 。将 <span class="math inline">\([0,r_{max})\)</span> 分为宽度为<span class="math inline">\(\Delta r=r_{max}/N_r\)</span> 的 <span class="math inline">\(N_r\)</span>
+个小区间，对轨迹的每一帧、每个a、b原子对，统计距离落在区间 <span class="math inline">\([r_i,r_i+dr)\)</span> 的频数 <span class="math inline">\(h_{ab}(i)\)</span>。可用下式获取小区间的index:
+<span class="math display">\[
+i=int(\frac{r}{\Delta r})
+\]</span> 最终径向分布函数可用下式计算： <span class="math display">\[
+g_{ab}(r_i)=\frac{h_{ab}(r_i)}{4\pi\rho_br_i^2\Delta rN_{conf}N_a}
+\]</span></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#计算RDF</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">RDF</span>(<span class="hljs-params">xtrj,rmax,nr</span>):<br>    <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">    xtrj: trjectory</span><br><span class="hljs-string">    rmax: maximum distance</span><br><span class="hljs-string">    nr: the number of intervals</span><br><span class="hljs-string">    &#x27;&#x27;&#x27;</span><br>    Nconf=<span class="hljs-built_in">len</span>(xtrj)<br>    Na=<span class="hljs-built_in">len</span>(xtrj[<span class="hljs-number">0</span>])<br>    rho=Na/(lxbox*lybox*lzbox)<br>    dr=rmax/nr<br>    disr=np.zeros(nr)<br>    rdf=np.zeros(nr)<br>    <span class="hljs-keyword">for</span> ncg <span class="hljs-keyword">in</span> np.arange(Nconf):<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(Na-<span class="hljs-number">1</span>):<br>            <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> np.arange(i+<span class="hljs-number">1</span>,Na):<br>                xr=xtrj[ncg,i]-xtrj[ncg,j]<br>                xr[<span class="hljs-number">0</span>]=xr[<span class="hljs-number">0</span>]-lxbox*<span class="hljs-built_in">round</span>(xr[<span class="hljs-number">0</span>]/lxbox)<br>                xr[<span class="hljs-number">1</span>]=xr[<span class="hljs-number">1</span>]-lybox*<span class="hljs-built_in">round</span>(xr[<span class="hljs-number">1</span>]/lybox)<br>                xr[<span class="hljs-number">2</span>]=xr[<span class="hljs-number">2</span>]-lzbox*<span class="hljs-built_in">round</span>(xr[<span class="hljs-number">2</span>]/lzbox)<br>                dis=sqrt(<span class="hljs-built_in">sum</span>(xr**<span class="hljs-number">2</span>))<br>                <span class="hljs-keyword">if</span> dis &lt;= rmax:<br>                    index=<span class="hljs-built_in">int</span>(dis/dr)<br>                    rdf[index]+=<span class="hljs-number">2</span><br>    <span class="hljs-keyword">for</span> jk <span class="hljs-keyword">in</span> np.arange(nr):<br>        disr[jk]=dr*(jk+<span class="hljs-number">0.5</span>)<br>        vb=((jk+<span class="hljs-number">1</span>)**<span class="hljs-number">3</span>-jk**<span class="hljs-number">3</span>)*dr**<span class="hljs-number">3</span><br>        nid=<span class="hljs-number">4</span>/<span class="hljs-number">3</span>*pi*vb*rho<br>        rdf[jk]=rdf[jk]/(Nconf*Na*nid)<br>    <span class="hljs-keyword">return</span> [disr,rdf]<br></code></pre></td></tr></table></figure>
+<h2 id="初始条件">初始条件</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><span class="hljs-keyword">import</span> matplotlib.pyplot <span class="hljs-keyword">as</span> plt<br><span class="hljs-keyword">from</span> mpl_toolkits.mplot3d <span class="hljs-keyword">import</span> Axes3D  <span class="hljs-comment"># 空间三维画图</span><br>plt.rcParams[<span class="hljs-string">&quot;font.family&quot;</span>]=[<span class="hljs-string">&#x27;Times New Roman&#x27;</span>]<br>plt.rcParams[<span class="hljs-string">&quot;font.size&quot;</span>]=<span class="hljs-number">15</span><br>data = xstore2[<span class="hljs-number">0</span>]<br>x = data[:, <span class="hljs-number">0</span>]  <br>y = data[:, <span class="hljs-number">1</span>]  <br>z = data[:, <span class="hljs-number">2</span>]  <br>fig = plt.figure()<br>ax = Axes3D(fig)<br>ax.scatter(x, y, z)<br>ax.set_zlabel(<span class="hljs-string">&#x27;Z&#x27;</span>, fontdict=&#123;<span class="hljs-string">&#x27;size&#x27;</span>: <span class="hljs-number">15</span>, <span class="hljs-string">&#x27;color&#x27;</span>: <span class="hljs-string">&#x27;red&#x27;</span>&#125;)<br>ax.set_ylabel(<span class="hljs-string">&#x27;Y&#x27;</span>, fontdict=&#123;<span class="hljs-string">&#x27;size&#x27;</span>: <span class="hljs-number">15</span>, <span class="hljs-string">&#x27;color&#x27;</span>: <span class="hljs-string">&#x27;red&#x27;</span>&#125;)<br>ax.set_xlabel(<span class="hljs-string">&#x27;X&#x27;</span>, fontdict=&#123;<span class="hljs-string">&#x27;size&#x27;</span>: <span class="hljs-number">15</span>, <span class="hljs-string">&#x27;color&#x27;</span>: <span class="hljs-string">&#x27;red&#x27;</span>&#125;)<br>plt.show()<br>plt.figure(figsize=[<span class="hljs-number">10</span>,<span class="hljs-number">4</span>],dpi=<span class="hljs-number">100</span>)<br>plt.subplot(<span class="hljs-number">121</span>)<br>plt.title(<span class="hljs-string">&quot;Intial position&quot;</span>)<br>[dist,rdf]=RDF(xstore2[<span class="hljs-number">0</span>:<span class="hljs-number">1</span>],<span class="hljs-number">1.0</span>,<span class="hljs-number">100</span>)<br>plt.xlabel(<span class="hljs-string">&quot;distance(nm)&quot;</span>)<br>plt.ylabel(<span class="hljs-string">&quot;RDF&quot;</span>)<br>plt.plot(dist,rdf)<br>plt.subplot(<span class="hljs-number">122</span>)<br>plt.hist(np.ravel(vstore2[<span class="hljs-number">0</span>]),bins=<span class="hljs-number">100</span>, density=<span class="hljs-literal">True</span>,label=<span class="hljs-string">&#x27;Simulation&#x27;</span>)<br>plt.title(<span class="hljs-string">&quot;Initial velocity&quot;</span>)<br>plt.xlabel(<span class="hljs-string">&quot;velocity(nm/ps)&quot;</span>)<br>plt.ylabel(<span class="hljs-string">&quot;PDF&quot;</span>)<br>plt.show()<br></code></pre></td></tr></table></figure>
+<figure>
+<img src="/2024/02/11/LJ-fluid-simulation/image-20250207011455597.png" srcset="/img/loading.gif" lazyload alt="image-20250207011455597">
+<figcaption aria-hidden="true">image-20250207011455597</figcaption>
+</figure>
+<p><img src="/2024/02/11/LJ-fluid-simulation/image-20250207011539956.png" srcset="/img/loading.gif" lazyload alt="image-20250207011539956" style="zoom:67%;"></p>
+<h2 id="模拟结果">模拟结果</h2>
+<figure>
+<img src="/2024/02/11/LJ-fluid-simulation/image-20250207011604565.png" srcset="/img/loading.gif" lazyload alt="image-20250207011604565">
+<figcaption aria-hidden="true">image-20250207011604565</figcaption>
+</figure>
+<ul>
+<li>20 ps 后平均温度稳定在目标温度附近，速度分布与MB分布吻合得很好</li>
+<li>经典离域子体系理想的温度分布为：</li>
+</ul>
+<p><span class="math display">\[
+f(T)=\frac{1}{\Gamma(\frac{3N+1}{2})}(\frac{3N}{2T_0})^{\frac{3N+1}{2}}\cdot
+T^{\frac{3N-1}{2}}\cdot exp(-\frac{3N}{2T_0}T)
+\]</span></p>
+<p>当N很大时，上述分布区域Gauss分布，且变得尖锐。温度的相对涨落满足：
+<span class="math display">\[
+\frac{\sigma^2_T}{&lt;T&gt;^2}=\frac{2}{3N}
+\]</span>
+由图可见，虽然任一自由度的速度分布与理想分布十分吻合，模拟产生的温度分布相比理想情形过于尖锐。调节热浴质量参数可能使温度涨落更接近理想。</p>
+<ul>
+<li>径向分布函数在LJ势的极小值点附近出现第一个极大值，与实际情况吻合。由于模拟时长较短，曲线不够平滑。最大距离不能超过模拟盒子的一半长度，以免计算粒子与自身镜像的作用，因而此处无法显示
+1.5 nm 附近RDF趋于1的情况。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs python">%matplotlib inline <br><span class="hljs-keyword">from</span> math <span class="hljs-keyword">import</span> gamma<br>nstep=<span class="hljs-number">10000</span><br>plt.rcParams[<span class="hljs-string">&quot;font.family&quot;</span>]=[<span class="hljs-string">&#x27;Times New Roman&#x27;</span>]<br>plt.rcParams[<span class="hljs-string">&quot;font.size&quot;</span>]=<span class="hljs-number">20</span><br><span class="hljs-comment">#分析1.温度随时间的变化</span><br>plt.figure(figsize=[<span class="hljs-number">16</span>,<span class="hljs-number">16</span>],dpi=<span class="hljs-number">150</span>)<br>plt.subplot(<span class="hljs-number">221</span>)<br>plt.xlabel(<span class="hljs-string">&quot;time&quot;</span>)<br>plt.ylabel(<span class="hljs-string">&quot;Temperature(K)&quot;</span>)<br>avT=np.zeros(nstep+<span class="hljs-number">1</span>)<br><span class="hljs-keyword">for</span> n <span class="hljs-keyword">in</span> np.arange(nstep+<span class="hljs-number">1</span>):<br>    avT[n]=<span class="hljs-built_in">sum</span>(Ts[<span class="hljs-number">0</span>:n+<span class="hljs-number">1</span>])/(n+<span class="hljs-number">1</span>)<br>plt.scatter(times,Ts,label=<span class="hljs-string">&quot;Instantious Temperature&quot;</span>,marker=<span class="hljs-string">&#x27;p&#x27;</span>,alpha=<span class="hljs-number">0.5</span>,s=<span class="hljs-number">0.1</span>)<br>plt.plot(times,avT,label=<span class="hljs-string">&quot;Average Temperature&quot;</span>,color=<span class="hljs-string">&#x27;g&#x27;</span>)<br>plt.scatter(times[<span class="hljs-number">0</span>:nstep:<span class="hljs-number">20</span>],T0*np.ones(nstep+<span class="hljs-number">1</span>)[<span class="hljs-number">0</span>:nstep:<span class="hljs-number">20</span>],label=<span class="hljs-string">&quot;Target Temperature&quot;</span>,s=<span class="hljs-number">5</span>,marker=<span class="hljs-string">&#x27;o&#x27;</span>)<br>plt.legend()<br><span class="hljs-comment">#分析2.温度的分布，与理想的平衡分布比较</span><br>plt.subplot(<span class="hljs-number">222</span>)<br>plt.hist(Ts,bins=<span class="hljs-number">200</span>,density=<span class="hljs-literal">True</span>,label=<span class="hljs-string">&#x27;Simulation&#x27;</span>)<br>tx=np.linspace(<span class="hljs-number">100</span>,<span class="hljs-number">140</span>,<span class="hljs-number">100</span>)<br><br>te=np.power(<span class="hljs-number">3</span>*N/(<span class="hljs-number">2</span>*pi*T0*tx),<span class="hljs-number">0.5</span>)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> np.arange(<span class="hljs-number">0.5</span>*<span class="hljs-number">3</span>*N):<br>    te*=<span class="hljs-number">3</span>*N*tx/<span class="hljs-number">2</span>/T0*np.exp(-tx/T0)/(<span class="hljs-number">0.5</span>+i)<br><br>plt.plot(tx,te,label=<span class="hljs-string">&#x27;Exact&#x27;</span>)<br>plt.xlabel(<span class="hljs-string">&quot;Temperature(K)&quot;</span>)<br>plt.ylabel(<span class="hljs-string">&quot;PDF&quot;</span>)<br>plt.legend()<br><span class="hljs-comment">#分析3.速度的分布,与理想的平衡分布（高斯分布）比较</span><br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&#x27;LJsim1_vstore.pickle&#x27;</span>, <span class="hljs-string">&#x27;rb&#x27;</span>) <span class="hljs-keyword">as</span> f:<br>    vstore2 = pickle.load(f)<br>plt.subplot(<span class="hljs-number">223</span>)<br>plt.xlabel(<span class="hljs-string">&quot;velocity(nm/ps)&quot;</span>)<br>plt.ylabel(<span class="hljs-string">&quot;PDF&quot;</span>)<br>plt.hist(np.ravel(vstore2),bins=<span class="hljs-number">100</span>, density=<span class="hljs-literal">True</span>,label=<span class="hljs-string">&#x27;Simulation&#x27;</span>)<br>vx=np.linspace(-<span class="hljs-number">1</span>,<span class="hljs-number">1</span>,<span class="hljs-number">100</span>)<br>ve=sqrt(m[<span class="hljs-number">0</span>]/(<span class="hljs-number">2</span>*pi*k*T0))*np.exp(-<span class="hljs-number">0.5</span>*m[<span class="hljs-number">0</span>]*vx**<span class="hljs-number">2</span>/k/T0)<br>plt.plot(vx,ve,label=<span class="hljs-string">&#x27;Exact&#x27;</span>)<br>plt.legend(loc=<span class="hljs-string">&#x27;upper right&#x27;</span>)<br><span class="hljs-comment">#分析4：径向分布函数</span><br>plt.subplot(<span class="hljs-number">224</span>)<br><br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&#x27;LJsim1_xstore.pickle&#x27;</span>, <span class="hljs-string">&#x27;rb&#x27;</span>) <span class="hljs-keyword">as</span> f:<br>    xstore2 = pickle.load(f)<br><span class="hljs-comment">#RDF(xtrj,rmax,nr)</span><br>[disr,rdf]=RDF(xstore2[<span class="hljs-number">0</span>:<span class="hljs-number">10001</span>:<span class="hljs-number">10</span>],<span class="hljs-number">1.0</span>,<span class="hljs-number">100</span>)<br><br>plt.xlabel(<span class="hljs-string">&quot;distance(nm)&quot;</span>)<br>plt.ylabel(<span class="hljs-string">&quot;RDF&quot;</span>)<br>plt.plot(disr,rdf)<br><br>plt.show()<br></code></pre></td></tr></table></figure>
+<h1 id="参考文献">参考文献</h1>
+<ol type="1">
+<li><p>Mark E. Tuckerman. (2010). Statistical Mechanics: Theory and
+Molecular Simulation. Oxford: Oxford University Press.</p></li>
+<li><p>Daan Frenkel &amp; Berend Smit著, 汪文川译. (2002).
+分子模拟:从算法到应用. 化学工业出版社.</p></li>
+</ol>
+<p>​</p>
+<p>​</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Science/" class="category-chain-item">Science</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Science/Computational-Chemistry/" class="category-chain-item">Computational Chemistry</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Science/Computational-Chemistry/Molecular-Dynamics/" class="category-chain-item">Molecular Dynamics</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Molecular-Dynamics/" class="print-no-link">#Molecular Dynamics</a>
+      
+        <a href="/tags/Statistical-Mechanics/" class="print-no-link">#Statistical Mechanics</a>
+      
+        <a href="/tags/Python/" class="print-no-link">#Python</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>A Python Demo for MD simulation of Lennard-Jones Fluid in NVT Ensemble</div>
+      <div>http://example.com/2024/02/11/LJ-fluid-simulation/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>Graminilune</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>February 11, 2024</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/07/05/nvt-md/" title="Molecular Dynamics in NVT ensemble (Working On)">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Molecular Dynamics in NVT ensemble (Working On)</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.11/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/tocbot@4.12.2/dist/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/anchor-js@4.3.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
