@@ -1,0 +1,944 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.ico">
+  <link rel="icon" href="/img/myfavicon.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Graminilune">
+  <meta name="keywords" content="Animation,Music,Science,Wondering">
+  
+    <meta name="description" content="GROMACS中OPC水的拓扑文件  与常用的三位点水模型相比，OPC多了一个虚拟电荷位点，总共有4个电荷位点和在氧原子上的单个Lennard-Jones位点参与相互作用。 首先确认OPC水的势函数类型与需要配合使用的力场是否兼容，（力场）拓扑文件的开头一般会有[ defaults ]字段，定义非键相互作用的计算规则： 例如： 123[ defaults ]; nbfunc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在GROMACS中使用OPC水模型">
+<meta property="og:url" content="http://example.com/2025/02/10/2025-02-10-%E5%9C%A8GROMACS%E4%B8%AD%E4%BD%BF%E7%94%A8OPC%E6%B0%B4%E6%A8%A1%E5%9E%8B/index.html">
+<meta property="og:site_name" content="Graminilune&#39;s Blog">
+<meta property="og:description" content="GROMACS中OPC水的拓扑文件  与常用的三位点水模型相比，OPC多了一个虚拟电荷位点，总共有4个电荷位点和在氧原子上的单个Lennard-Jones位点参与相互作用。 首先确认OPC水的势函数类型与需要配合使用的力场是否兼容，（力场）拓扑文件的开头一般会有[ defaults ]字段，定义非键相互作用的计算规则： 例如： 123[ defaults ]; nbfunc">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/chem1912/blog_picture/article_img/noname.png">
+<meta property="article:published_time" content="2025-02-10T03:30:00.000Z">
+<meta property="article:modified_time" content="2025-02-11T05:00:44.596Z">
+<meta property="article:author" content="Graminilune">
+<meta property="article:tag" content="GROMACS">
+<meta property="article:tag" content="Molecular Modeling">
+<meta property="article:tag" content="Classical Force Field">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/chem1912/blog_picture/article_img/noname.png">
+  
+  
+  
+  <title>在GROMACS中使用OPC水模型 - Graminilune&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null},"gtag":null,"woyaola":null,"cnzz":null},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Graminilune&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://cdn.jsdelivr.net/gh/chem1912/blog_picture/article_img/noname.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="在GROMACS中使用OPC水模型"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-02-10 11:30" pubdate>
+          February 10, 2025 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          1.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          <!-- compatible with older versions-->
+          14 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">在GROMACS中使用OPC水模型</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="gromacs中opc水的拓扑文件">GROMACS中OPC水的拓扑文件</h1>
+<p><img src="/2025/02/10/2025-02-10-%E5%9C%A8GROMACS%E4%B8%AD%E4%BD%BF%E7%94%A8OPC%E6%B0%B4%E6%A8%A1%E5%9E%8B/image-20250210152116532.png" srcset="/img/loading.gif" lazyload alt="image-20250210152116532" style="zoom: 33%;"></p>
+<p>与常用的三位点水模型相比，OPC多了一个虚拟电荷位点，总共有4个电荷位点和在氧原子上的单个Lennard-Jones位点参与相互作用。</p>
+<p>首先确认OPC水的势函数类型与需要配合使用的力场是否兼容，（力场）拓扑文件的开头一般会有[
+defaults ]字段，定义非键相互作用的计算规则：</p>
+<p>例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">[ defaults ]<br>; nbfunc        comb-rule       gen-pairs       fudgeLJ fudgeQQ<br>1               2               <span class="hljs-built_in">yes</span>             0.5     0.8333333333<br></code></pre></td></tr></table></figure>
+<p>GROMACS中非键相互作用为对势加和，范德华作用可由Lennard-Jones或Buckingham势计算，其中Lennard-Jones写成：
+<span class="math display">\[
+V_{LJ}(r_{ij})=\frac{C_{ij}^{(12)}}{r_{ij}^{12}}-\frac{C_{ij}^{(6)}}{r_{ij}^{6}}
+\tag{1}
+\]</span> 或 <span class="math display">\[
+V_{LJ}(r_{ij})=4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12}-\left(\frac{\sigma_{ij}}{r_{ij}}\right)^6\right)
+\tag{2}
+\]</span></p>
+<p><strong>[ defaults ] :</strong></p>
+<ul>
+<li><code>nbfunc</code> Use 1 (Lennard-Jones) or 2 (Buckingham).</li>
+<li><code>comb-rule</code></li>
+<li><code>gen-pairs</code> is for pair generation. The default is ‘no’,
+<em>i.e.</em> get 1-4 parameters from the pairtypes list. When
+parameters are not present in the list, stop with a fatal error. Setting
+‘yes’ generates 1-4 parameters that are not present in the pair list
+from normal Lennard-Jones parameters using <code>fudgeLJ</code></li>
+<li><code>fudgeLJ</code> is the factor by which to multiply
+Lennard-Jones 1-4 interactions, default 1</li>
+<li><code>fudgeQQ</code> is the factor by which to multiply
+electrostatic 1-4 interactions, default 1</li>
+<li>NN is the power for the repulsion term in a 6-NN potential (with
+nonbonded-type Lennard-Jones only), starting with GROMACS version 4.5,
+<a target="_blank" rel="noopener" href="https://manual.gromacs.org/documentation/2021-current/onlinehelp/gmx-mdrun.html#gmx-mdrun">grompp</a>
+also reads and applies NN, for values not equal to 12 tabulated
+interaction functions are used (in older version you would have to use
+user tabulated interactions).</li>
+</ul>
+<p><strong>Note</strong> that <code>gen-pairs</code>,
+<code>fudgeLJ</code>, <code>fudgeQQ</code>, and NN are optional.
+<code>fudgeLJ</code> is only used when generate pairs is set to ‘yes’,
+and <code>fudgeQQ</code> is always used. However, if you want to specify
+NN you need to give a value for the other parameters as well.</p>
+<p>首先需要将OPC水的原子类型加入需要配合使用的力场文件中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">;To use this opc.itp, you must also add below lines into [ atomtypes ] of ffnonbonded.itp under AMBER forcefield<br>;OW_opc      8      15.9994  0.0000  A   0.316655  0.89036<br>;HW_opc      1       1.0080  0.0000  A   0.0       0.0<br></code></pre></td></tr></table></figure>
+<p>如果是使用tleap建模的流程，则将原子类型加入complex_GMX.top的[
+atomtypes ]中</p>
+<p>这里给出范德华参数C6和C12：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">OW_opc   OW_opc      15.9994  0.0000    A     0.316655      0.89036<br>HW_opc   HW_opc       1.0080  0.0000    A     0.0           0.0<br>MW       MW           0.0     0.0000    A     0.0           0.0<br></code></pre></td></tr></table></figure>
+<p>SOB给出的opc.itp</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><code class="hljs bash">[ moleculetype ]<br>; molname	nrexcl<br>SOL		2<br><br>[ atoms ]<br>; <span class="hljs-built_in">id</span>  at <span class="hljs-built_in">type</span>     res nr  res name  at name  cg nr  charge    mass<br>  1   OW_opc  1       SOL       OW       1       0        16.00000<br>  2   HW_opc  1       SOL       HW1      1       0.6791   1.00800<br>  3   HW_opc  1       SOL       HW2      1       0.6791   1.00800<br>  4   MW      1       SOL       MW       1      -1.3582   0.00000<br><br><span class="hljs-comment">#ifndef FLEXIBLE</span><br><br>[ settles ]<br>; i	funct	doh	dhh<br>1	1	0.08724	0.137116<br><br><span class="hljs-comment">#else</span><br>;OPC paper didn<span class="hljs-string">&#x27;t define force constant for flexible mode, so the FC values are set to TIP4P-Ew ones</span><br><span class="hljs-string">[ bonds ]</span><br><span class="hljs-string">; i     j       funct   length  force.c.</span><br><span class="hljs-string">1       2       1       0.08724 502416.0 0.08724        502416.0 </span><br><span class="hljs-string">1       3       1       0.08724 502416.0 0.08724        502416.0 </span><br><span class="hljs-string">        </span><br><span class="hljs-string">[ angles ]</span><br><span class="hljs-string">; i     j       k       funct   angle   force.c.</span><br><span class="hljs-string">2       1       3       1       103.6  628.02  103.6  628.02  </span><br><span class="hljs-string"></span><br><span class="hljs-string">#endif</span><br><span class="hljs-string"></span><br><span class="hljs-string"></span><br><span class="hljs-string">[ virtual_sites3 ]</span><br><span class="hljs-string">; Vsite from                    funct   a               b</span><br><span class="hljs-string">4       1       2       3       1       0.14772952     0.14772952</span><br><span class="hljs-string">;</span><br><span class="hljs-string">; a = b = distance(O-MW) / [ cos (angle(MW-O-H)) * distance(OH) ] /2</span><br><span class="hljs-string">;	      = 0.01594/(cos(103.6/2/180*3.141592653589793)*0.08724)/2</span><br><span class="hljs-string"></span><br><span class="hljs-string">[ exclusions ]</span><br><span class="hljs-string">1	2	3	4</span><br><span class="hljs-string">2	1	3	4</span><br><span class="hljs-string">3	1	2	4</span><br><span class="hljs-string">4	1	2	3</span><br><span class="hljs-string"></span><br></code></pre></td></tr></table></figure>
+<p>OPC离子参数：</p>
+<p><img src="/2025/02/10/2025-02-10-%E5%9C%A8GROMACS%E4%B8%AD%E4%BD%BF%E7%94%A8OPC%E6%B0%B4%E6%A8%A1%E5%9E%8B/image-20250210190045066.png" srcset="/img/loading.gif" lazyload alt="image-20250210190045066" style="zoom: 33%;"></p>
+<p>使用LB combined rule：</p>
+<p><img src="/2025/02/10/2025-02-10-%E5%9C%A8GROMACS%E4%B8%AD%E4%BD%BF%E7%94%A8OPC%E6%B0%B4%E6%A8%A1%E5%9E%8B/image-20250210190122263.png" srcset="/img/loading.gif" lazyload alt="image-20250210190122263" style="zoom: 33%;"></p>
+<p>参考https://github.com/intbio/gromacs_ff/blob/master/amber99bsc1.ff/ions.itp写opc_ionsitp文件，重复：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">[ moleculetype ]<br>; molname       nrexcl<br>IB+             1       ; big positive ion<br><br>[ atoms ]<br>; <span class="hljs-built_in">id</span>    at <span class="hljs-built_in">type</span>         res nr  residu name     at name  cg nr  charge<br>   1    IB                  1       IB+            IB      1    1.00000<br></code></pre></td></tr></table></figure>
+<p>范德华参数在力场的ffnonbonded.itp中或top文件加入：</p>
+<p>参考<a target="_blank" rel="noopener" href="https://github.com/intbio/gromacs_ff/blob/master/amber14sb_parmbsc1_opc_lmi_PTM.ff/README.md">此处</a>的建议，采用Kenneth
+M. Merz, Jr等人拟合的单价离子的IOD参数集：</p>
+<figure>
+<img src="/2025/02/10/2025-02-10-%E5%9C%A8GROMACS%E4%B8%AD%E4%BD%BF%E7%94%A8OPC%E6%B0%B4%E6%A8%A1%E5%9E%8B/image-20250210193856226.png" srcset="/img/loading.gif" lazyload alt="image-20250210193856226">
+<figcaption aria-hidden="true">image-20250210193856226</figcaption>
+</figure>
+<p>比较Amber和GROMACS中C6和C12 <span class="math display">\[
+\begin{align}
+C_{12}^{ij}&amp;=\epsilon^a_{ij}R^{12}_{min,ij}\\
+&amp;=4\epsilon^g_{ij}\sigma^{12}_{ij}
+\end{align}
+\]</span></p>
+<p><span class="math display">\[
+\begin{align}
+C_{6}^{ij}&amp;=2\epsilon^a_{ij}R^{6}_{min,ij}\\
+&amp;=4\epsilon^g_{ij}\sigma^{6}_{ij}
+\end{align}
+\]</span></p>
+<p>因而 <span class="math display">\[
+\epsilon^g_{ij}(kJ/mol)=\epsilon^a_{ij}(kcal/mol)*4.182
+\]</span></p>
+<p><span class="math display">\[
+\sigma_{ij}=R_{min,ij}(Angstrom)/2^{\frac{1}{6} }/10
+\]</span></p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th>R<sub>min</sub>/2 (Å)</th>
+<th>ε (kcal/mol)</th>
+<th>σ (nm)</th>
+<th>ε (kJ/mol)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Li+</td>
+<td>1.321</td>
+<td>0.00642</td>
+<td>0.11769</td>
+<td>0.02683</td>
+</tr>
+<tr class="even">
+<td>Na+</td>
+<td>1.47</td>
+<td>0.03038</td>
+<td>0.13096</td>
+<td>0.12706</td>
+</tr>
+<tr class="odd">
+<td>K+</td>
+<td>1.743</td>
+<td>0.16869</td>
+<td>0.15528</td>
+<td>0.70548</td>
+</tr>
+<tr class="even">
+<td>Rb+</td>
+<td>1.81</td>
+<td>0.22132</td>
+<td>0.16125</td>
+<td>0.92558</td>
+</tr>
+<tr class="odd">
+<td>Cs+</td>
+<td>1.99</td>
+<td>0.38035</td>
+<td>0.17729</td>
+<td>1.59063</td>
+</tr>
+<tr class="even">
+<td>Tl+</td>
+<td>1.866</td>
+<td>0.26895</td>
+<td>0.16624</td>
+<td>1.12474</td>
+</tr>
+<tr class="odd">
+<td>Cu+</td>
+<td>1.213</td>
+<td>0.00137</td>
+<td>0.10807</td>
+<td>0.00573</td>
+</tr>
+<tr class="even">
+<td>Ag+</td>
+<td>1.502</td>
+<td>0.03963</td>
+<td>0.13381</td>
+<td>0.16572</td>
+</tr>
+<tr class="odd">
+<td>F–</td>
+<td>1.737</td>
+<td>0.16427</td>
+<td>0.15475</td>
+<td>0.68697</td>
+</tr>
+<tr class="even">
+<td>Cl–</td>
+<td>2.16</td>
+<td>0.52989</td>
+<td>0.19243</td>
+<td>2.21598</td>
+</tr>
+<tr class="odd">
+<td>Br–</td>
+<td>2.315</td>
+<td>0.64855</td>
+<td>0.20624</td>
+<td>2.71224</td>
+</tr>
+<tr class="even">
+<td>I–</td>
+<td>2.59</td>
+<td>0.80294</td>
+<td>0.23074</td>
+<td>3.35789</td>
+</tr>
+</tbody>
+</table>
+<p>在complex_GMX.top中加入</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs bash">Li       Li           6.94    0.00000   A     0.11769       0.02683 <br>Na       Na          22.99    0.00000   A     0.13096       0.12706 <br>K        K           39.10    0.00000   A     0.15528       0.70548 <br>Rb       Rb          85.47    0.00000   A     0.16125       0.92558 <br>Cs       Cs         132.91    0.00000   A     0.17729       1.59063 <br>Tl       Tl         204.38    0.00000   A     0.16624       1.12474 <br>Cu       Cu          63.546   0.00000   A     0.10807       0.00573 <br>Ag       Ag         107.87    0.00000   A     0.13381       0.16572 <br>F        F           19.00    0.00000   A     0.15475       0.68697 <br>Cl       Cl          35.45    0.00000   A     0.19243       2.21598 <br>Br       Br          79.90    0.00000   A     0.20624       2.71224 <br>I        I          126.9     0.00000   A     0.23074       3.35789 <br></code></pre></td></tr></table></figure>
+<h1 id="gromacs-蛋白质水溶液建模">GROMACS 蛋白质水溶液建模</h1>
+<p>我们已通过AmberTools23中的tleap工具和acpype获得蛋白质-配体复合物的拓扑文件，tleap输入文件如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">source</span> leaprc.protein.ff19SB<br><span class="hljs-built_in">source</span> leaprc.gaff2<br>loadamberparams ../subA_resp/subA.frcmod<br>loadoff ../subA_resp/NTA.lib<br>loadamberparams ../subB_resp/subB.frcmod<br>loadoff ../subB_resp/NTB.lib<br>complex = loadpdb complex_input.pdb <span class="hljs-comment">#注意：要使得pdb中配体原子名称与mol2中匹配，蛋白质端基要TER</span><br>check complex<br>savepdb complex complex_leap.pdb<br>saveamberparm complex complex.prmtop complex.inpcrd<br>quit<br></code></pre></td></tr></table></figure>
+<p>我们得到了complex_GMX.top、complex_GMX.gro作为进一步建模的起点。</p>
+<p>要使用水模型，我们需要在complex_GMX.top文件中加入以下字段。首先include水模型的拓扑文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash">; Include water topology<br><span class="hljs-comment">#include &quot;opc.itp&quot;</span><br><span class="hljs-comment">#ifdef POSRES_WATER</span><br>; Position restraint <span class="hljs-keyword">for</span> each water oxygen<br>[ position_restraints ]<br>;  i funct       fcx        fcy        fcz<br>   1    1       1000       1000       1000<br><span class="hljs-comment">#endif</span><br>; Include topology <span class="hljs-keyword">for</span> ions<br><span class="hljs-comment">#include &quot;opc_ions.itp&quot;</span><br></code></pre></td></tr></table></figure>
+<p>首先创建盒子和加水</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">gmx editconf -f complex_GMX.gro -o newbox.gro -bt cubic -d 1.2 -c<br>gmx solvate -<span class="hljs-built_in">cp</span> newbox.gro -cs tip4p.gro -p complex_GMX.top -o solv.gro<br></code></pre></td></tr></table></figure>
+<p>editconf创建立方盒子(-bt cubic)，分子边缘距离盒子边缘至少1.2 nm(-d
+1.2)，将分子置于中心(-c)</p>
+<p>solvate用tip4p.gro中的溶剂分子填充盒子，它会在complex_GMX.top中写入溶剂分子数目：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">[ system ]<br>complex <span class="hljs-keyword">in</span> water<br><br>[ molecules ]<br>; Compound        nmols<br> complex          1     <br>SOL             25863<br></code></pre></td></tr></table></figure>
+<p>然后添加离子</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gmx grompp -f ions.mdp -c solv.gro -p complex_GMX.top -o ions.tpr<br></code></pre></td></tr></table></figure>
+<p>这里ions.mdp是一个基本的参数文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs bash">; LINES STARTING WITH <span class="hljs-string">&#x27;;&#x27;</span> ARE COMMENTS<br>title		    = Minimization	; Title of run<br><br>; Parameters describing what to <span class="hljs-keyword">do</span>, when to stop and what to save<br>integrator	    = steep		; Algorithm (steep = steepest descent minimization)<br>emtol		    = 1000.0  	; Stop minimization when the maximum force &lt; 10.0 kJ/mol<br>emstep          = 0.01      ; Energy step size<br>nsteps		    = 50000	  	; Maximum number of (minimization) steps to perform<br><br>; Parameters describing how to find the neighbors of each atom and how to calculate the interactions<br>nstlist		    = 1		    ; Frequency to update the neighbor list and long range forces<br>cutoff-scheme   = Verlet<br>ns_type		    = grid		; Method to determine neighbor list (simple, grid)<br>rlist		    = 1.0		; Cut-off <span class="hljs-keyword">for</span> making neighbor list (short range forces)<br>coulombtype	    = cutoff	; Treatment of long range electrostatic interactions<br>rcoulomb	    = 1.0		; long range electrostatic cut-off<br>rvdw		    = 1.0		; long range Van der Waals cut-off<br>pbc             = xyz 		; Periodic Boundary Conditions<br></code></pre></td></tr></table></figure>
+<p>之后用Monte Carlo方法在合适的位置添加离子</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gmx genion -s ions.tpr -o complex_solv_GMX.gro -p complex_GMX.top -pname NA -nname CL -neutral<br></code></pre></td></tr></table></figure>
+<p>加入了6个Na+：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">[ molecules ]<br>; Compound        nmols<br> complex          1<br>SOL         25857<br>NA               6<br></code></pre></td></tr></table></figure>
+<p>习惯用拓扑文件名为 complex_solv_GMX.top</p>
+<p>在拓扑文件中复合物拓扑之后加入，以便使用对复合物重原子的位置限制</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">; Include Position restraint file<br><span class="hljs-comment">#ifdef POSRES</span><br><span class="hljs-comment">#include &quot;posre_complex.itp&quot;</span><br><span class="hljs-comment">#endif</span><br></code></pre></td></tr></table></figure>
+<h1 id="模拟工作流">模拟工作流</h1>
+<p>运行前，这些文件需复制到工作文件夹</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">opc_ions.itp<br>opc.itp<br>em.mdp<br>complex_solv_GMX.gro<br>posre_complex.itp<br>complex_solv_GMX.top<br></code></pre></td></tr></table></figure>
+<p>能量最小化</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">gmx grompp -f em.mdp -c complex_solv_GMX.gro -p complex_solv_GMX.top -o em.tpr<br>gmx mdrun -deffnm em<br></code></pre></td></tr></table></figure>
+<p>其中参数文件为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs bash">; minim.mdp - used as input into grompp to generate em.tpr<br>title       = Minimization<br>integrator  = steep     ; Algorithm (steep = steepest descent minimization)<br>emtol       = 500.0    ; Stop minimization when the maximum force &lt; 50.0 kJ/mol/nm<br>emstep      = 0.01      ; Energy step size<br>nsteps      = 50000     ; Maximum number of (minimization) steps to perform<br>comm-mode   = Linear    ; remove translation of center of mass<br>; Parameters describing how to find the neighbors of each atom and how to calculate the interactions<br>cutoff-scheme   = Verlet<br>ns_type         = grid      ; Method to determine neighbor list (simple, grid)<br>coulombtype     = PME       ; Treatment of long range electrostatic interaction<br>rcoulomb        = 1.2       ; Short-range electrostatic cut-off<br>rvdw            = 1.2       ; Short-range Van der Waals cut-off<br>pbc             = xyz       ; Periodic Boundary Conditions (<span class="hljs-built_in">yes</span>/no)<br></code></pre></td></tr></table></figure>
+<p>之后便是温度和盒子的预平衡，使得系统充分驰豫，以便在NPT系综下进行生产相模拟。该部分涉及<a target="_blank" rel="noopener" href="https://chem1912.github.io/2024/07/05/nvt-md/">热浴</a>和<a href>压浴</a>。</p>
+<p>如果不担心崩溃，可以直接在NPT系综中驰豫：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs bash">title       = NPT equilibration <br>define                   = -DPOSRES ; restraint the complex <br>; Run parameters<br>integrator  = md        ; leap-frog integrator<br>nsteps      = 500000     ; 2 * 500000 =  1 ns<br>dt          = 0.002     ; 2 fs<br>; Output control<br>nstxout     = 0         ; save coordinates every 1.0 ps<br>nstvout     = 0         ; save velocities every 1.0 ps<br>nstcalcenergy    = 500  ; calculate energies every 1.0 ps<br>nstenergy   = 500       ; save energies every 1.0 ps<br>nstlog      = 500       ; update <span class="hljs-built_in">log</span> file every 1.0 ps<br>energygrps  = System<br>nstxout-compressed  = 500      ; write .xtc trajectory every 1.0 ps<br>compressed-x-grps   = System <br>; Bond parameters<br>continuation    = no           ; first dynamics run<br>constraint_algorithm = lincs    ; holonomic constraints <br>constraints     = h-bonds     ; all bonds (even heavy atom-H bonds) constrained<br>lincs_iter      = 1             ; accuracy of LINCS<br>lincs_order     = 4             ; also related to accuracy<br>; Neighborsearching<br>cutoff-scheme   = Verlet<br>ns_type         = grid      ; search neighboring grid cells<br>nstlist         = 10        ; 20 fs, largely irrelevant with Verlet<br>rcoulomb        = 1.0      ; short-range electrostatic cutoff (<span class="hljs-keyword">in</span> nm)<br>rvdw            = 1.0       ; short-range van der Waals cutoff (<span class="hljs-keyword">in</span> nm)<br>; Electrostatics<br>coulombtype     = PME       ; Particle Mesh Ewald <span class="hljs-keyword">for</span> long-range electrostatics<br>pme_order       = 4         ; cubic interpolation<br>fourierspacing  = 0.16      ; grid spacing <span class="hljs-keyword">for</span> FFT<br>; vdW <br>;vdwtype          = PME<br>;vdw-modifier     = Potential-Shift<br>;lj-pme-comb-rule = Lorentz-Berthelot<br>; Temperature coupling<br>tcoupl      = V-rescale                     ; modified Berendsen thermostat<br>tc-grps     = System                         ; coupling group<br>tau_t       = 0.1                           ; <span class="hljs-keyword">time</span> constant, <span class="hljs-keyword">in</span> ps<br>ref_t       = 300                           ; reference temperature, one <span class="hljs-keyword">for</span> each group, <span class="hljs-keyword">in</span> K<br>; Pressure coupling<br>pcoupl      = C-rescale             ; pressure coupling is on <span class="hljs-keyword">for</span> NPT<br>pcoupltype  = isotropic                     ; uniform scaling of box vectors<br>tau_p       = 0.3                           ; <span class="hljs-keyword">time</span> constant, <span class="hljs-keyword">in</span> ps<br>ref_p       = 1.0                           ; reference pressure, <span class="hljs-keyword">in</span> bar<br>compressibility = 4.5e-5                    ; isothermal compressibility of water, bar^-1<br>refcoord_scaling    = com<br>; Periodic boundary conditions<br>pbc         = xyz       ; 3-D PBC<br>; Dispersion correction<br>;DispCorr    = EnerPres  ; account <span class="hljs-keyword">for</span> cut-off vdW scheme<br>; Velocity generation<br>gen_vel     = <span class="hljs-built_in">yes</span>        ; velocity generation off after NPT <br><br></code></pre></td></tr></table></figure>
+<p>一般先限制复合物驰豫，然后放开复合物平衡。</p>
+<p>含虚拟位点的体系在gpu计算上有一些限制，不能在gpu上update，这里实使用gmx2024：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">gmx grompp -f ../npt2.mdp -c em.gro -p complex_solv_GMX.top  -o npt2.tpr -r em.gro <br>gmx mdrun -deffnm npt2 -ntmpi <span class="hljs-variable">$NGPUS</span> -ntomp <span class="hljs-variable">$OMPTHREADS</span> -gpu_id 0 -nb gpu  -pme gpu -bonded gpu <br>gmx grompp -c npt2.gro -t npt2.cpt  -p complex_solv_GMX.top  -f ../run.mdp -o run.tpr<br>gmx mdrun -deffnm run -ntmpi <span class="hljs-variable">$NGPUS</span> -ntomp <span class="hljs-variable">$OMPTHREADS</span> -gpu_id 0 -nb gpu  -pme gpu -bonded gpu <br>gmx grompp -c run.gro -t run.cpt  -p complex_solv_GMX.top  -f ../run2.mdp -o run2.tpr<br>gmx mdrun -deffnm run2 -ntmpi <span class="hljs-variable">$NGPUS</span> -ntomp <span class="hljs-variable">$OMPTHREADS</span> -gpu_id 0 -nb gpu  -pme gpu -bonded gpu <br></code></pre></td></tr></table></figure>
+<h1 id="reference">Reference</h1>
+<ol type="1">
+<li>Izadi, S.; Anandakrishnan, R.; Onufriev, A. V. Building Water
+Models: A Different Approach. <em>J. Phys. Chem. Lett.</em>
+<strong>2014</strong>, <em>5</em> (21), 3863–3871.
+https://doi.org/10.1021/jz501780a.</li>
+<li>Sengupta, A.; Li, Z.; Song, L. F.; Li, P.; Merz, K. M.
+Parameterization of Monovalent Ions for the OPC3, OPC, TIP3P-FB, and
+TIP4P-FB Water Models. <em>J. Chem. Inf. Model.</em>
+<strong>2021</strong>, <em>61</em> (2), 869–880.
+https://doi.org/10.1021/acs.jcim.0c01390.</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Science/" class="category-chain-item">Science</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Science/Theoretical-and-Computational-Chemistry/" class="category-chain-item">Theoretical and Computational Chemistry</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Science/Theoretical-and-Computational-Chemistry/Molecular-Modeling/" class="category-chain-item">Molecular Modeling</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/GROMACS/" class="print-no-link">#GROMACS</a>
+      
+        <a href="/tags/Molecular-Modeling/" class="print-no-link">#Molecular Modeling</a>
+      
+        <a href="/tags/Classical-Force-Field/" class="print-no-link">#Classical Force Field</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>在GROMACS中使用OPC水模型</div>
+      <div>http://example.com/2025/02/10/2025-02-10-在GROMACS中使用OPC水模型/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>Graminilune</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>February 10, 2025</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/02/09/RMP-rate-theory/" title="Reaction-Rate Theory - Fifty Years after Kramers 翻译（一）">
+                        <span class="hidden-mobile">Reaction-Rate Theory - Fifty Years after Kramers 翻译（一）</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.11/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/tocbot@4.12.2/dist/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/anchor-js@4.3.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
