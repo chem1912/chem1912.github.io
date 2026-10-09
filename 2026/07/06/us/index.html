@@ -22,13 +22,13 @@
     <meta name="description" content="前言 ​ Torrie和Valleau提出的伞型采样(Umbrella Sampling, US)基于重要性采样的思想，通过施加依赖于反应坐标（RC）的偏置势，使系统可以访问自由能面上的高能区域，从而保证对构型空间的充分采样。通常将反应坐标区间划分为一系列窗口，并行运行一系列模拟，在这些模拟中分别施加将系统维持在各个窗口中心附近的简谐限制势。限制势的力常数需与窗口宽度相协调，以便保证相邻窗口的">
 <meta property="og:type" content="article">
 <meta property="og:title" content="QM&#x2F;MM伞型采样实践">
-<meta property="og:url" content="http://example.com/2026/07/06/%E4%BC%9E%E5%9E%8B%E9%87%87%E6%A0%B7%E5%AE%9E%E8%B7%B5/index.html">
+<meta property="og:url" content="http://example.com/2026/07/06/us/index.html">
 <meta property="og:site_name" content="Graminilune&#39;s Blog">
 <meta property="og:description" content="前言 ​ Torrie和Valleau提出的伞型采样(Umbrella Sampling, US)基于重要性采样的思想，通过施加依赖于反应坐标（RC）的偏置势，使系统可以访问自由能面上的高能区域，从而保证对构型空间的充分采样。通常将反应坐标区间划分为一系列窗口，并行运行一系列模拟，在这些模拟中分别施加将系统维持在各个窗口中心附近的简谐限制势。限制势的力常数需与窗口宽度相协调，以便保证相邻窗口的">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://cdn.jsdelivr.net/gh/chem1912/blog_picture/article_img/yourname(1).png">
 <meta property="article:published_time" content="2026-07-06T12:00:00.000Z">
-<meta property="article:modified_time" content="2026-07-06T12:33:55.517Z">
+<meta property="article:modified_time" content="2026-10-09T16:51:37.593Z">
 <meta property="article:author" content="Graminilune">
 <meta property="article:tag" content="QM&#x2F;MM">
 <meta property="article:tag" content="free energy calculation">
@@ -364,7 +364,10 @@ V_i(s(x))=\frac{1}{2}k_i(s(x)-s_i)^2
 <p>并令ntx = 5</p></li>
 <li><p>当前目录下的Plumed输入文件：plumed.dat</p>
 <p>采用MOVINGRESTRAINT关键词实现SMD</p>
-<p><img src="/2026/07/06/%E4%BC%9E%E5%9E%8B%E9%87%87%E6%A0%B7%E5%AE%9E%E8%B7%B5/image-20260706100354226.png" srcset="/img/loading.gif" lazyload alt="image-20260706100354226"></p>
+<figure>
+<img src="/2026/07/06/us/image-20260706100354226.png" srcset="/img/loading.gif" lazyload alt="image-20260706100354226">
+<figcaption aria-hidden="true">image-20260706100354226</figcaption>
+</figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment">#d(H-C(NAP))</span><br>d1: DISTANCE ATOMS=2614,2587  <span class="hljs-comment"># d2是断裂的键，修改原子index（从1编号）</span><br><span class="hljs-comment">#d(H-C(FOL)</span><br>d2: DISTANCE ATOMS=2614,2502  <span class="hljs-comment"># d1是形成的键，修改原子index（从1编号）</span><br><span class="hljs-comment">#d(H-C(NAP))-d(H-C(FOL))= d1-d2</span><br><span class="hljs-built_in">dd</span>: COMBINE ARG=d1,d2 POWERS=1,1 COEFFICIENTS=1.0,-1.0 PERIODIC=NO  <span class="hljs-comment"># 定义键长的线性组合</span><br><br>restraint: ...<br>   MOVINGRESTRAINT<br>   ARG=<span class="hljs-built_in">dd</span> <br>   STEP0=0 AT0=-0.25  KAPPA0=125460 <span class="hljs-comment"># AT0是限制中心的初始位置（单位nm)， KAPPA0是力常数（单位kcal/mol/nm^2)</span><br>   STEP1=20000 AT1=0.15          <span class="hljs-comment"># AT0是限制中心的最终位置（单位nm)，STEP1是最终步数。SMD过程中，限制中心从AT0线性变化为AT1</span><br>...<br><br><span class="hljs-comment">#FLUSH STRIDE=10</span><br>PRINT STRIDE=10 ARG=d1,d2,<span class="hljs-built_in">dd</span>,restraint.bias,restraint.work,restraint.force2  FILE=colvar <br></code></pre></td></tr></table></figure></li>
 <li><p>../pre-eq/中预平衡的结构cmd_qmmm.rst</p></li>
 <li><p>../top/中的拓扑文件complex_solv.prmtop</p></li>
@@ -439,11 +442,14 @@ Integration，UI）等。UI能产生较为平滑的自由能曲线，但其依�
 WHAM和MBAR都要求相邻窗口的概率分布有一定的重叠，自由能估计值的统计方差与重叠矩阵相关。我们可以用核密度估计可视化来简单检查：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python draw_us.py --meta metadatafile --interval 10<br></code></pre></td></tr></table></figure>
 <p>在下面的示例中，相邻窗口RC概率分布重叠良好：</p>
-<p><img src="/2026/07/06/%E4%BC%9E%E5%9E%8B%E9%87%87%E6%A0%B7%E5%AE%9E%E8%B7%B5/image-20260706195852674.png" srcset="/img/loading.gif" lazyload alt="image-20260706195852674" style="zoom:67%;"></p>
+<figure>
+<img src="/2026/07/06/us/image-20260706195852674.png" srcset="/img/loading.gif" lazyload alt="image-20260706195852674">
+<figcaption aria-hidden="true">image-20260706195852674</figcaption>
+</figure>
 <h3 id="wham">WHAM</h3>
 <p>​
 从https://github.com/agrossfield/wham下载WHAM程序代码。根据doc/doc.pdf的说明，如果想要输出的自由能单位是kcal/mol或约化单位，需修改头文件wham/wham.h和wham/wham-2d.h中的k_B数值：</p>
-<p><img src="/2026/07/06/%E4%BC%9E%E5%9E%8B%E9%87%87%E6%A0%B7%E5%AE%9E%E8%B7%B5/image-20260706005444541.png" srcset="/img/loading.gif" lazyload alt="image-20260706005444541" style="zoom:67%;"></p>
+<p><img src="/2026/07/06/us/image-20260706005444541.png" srcset="/img/loading.gif" lazyload alt="image-20260706005444541" style="zoom:50%;"></p>
 <p>然后编译wham程序：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> wham<br>make clean<br>make<br></code></pre></td></tr></table></figure>
 <p>wham程序的运行命令为：</p>
@@ -473,7 +479,10 @@ Angstrom），重加权得到300 K下的自由能曲线。</p>
 activate test</p>
 <p>安装相应软件包：pip install pymbar pandas matplotlib</p>
 <p>修改如下参数：</p>
-<p><img src="/2026/07/06/%E4%BC%9E%E5%9E%8B%E9%87%87%E6%A0%B7%E5%AE%9E%E8%B7%B5/image-20260706023004401.png" srcset="/img/loading.gif" lazyload alt="image-20260706023004401" style="zoom: 50%;"></p>
+<figure>
+<img src="/2026/07/06/us/image-20260706023004401.png" srcset="/img/loading.gif" lazyload alt="image-20260706023004401">
+<figcaption aria-hidden="true">image-20260706023004401</figcaption>
+</figure>
 <ul>
 <li>metadatafile格式和WHAM相同。</li>
 <li>设置温度temp。</li>
@@ -573,7 +582,7 @@ Simulations. September 5, 2023.</li>
   <div class="license-box my-3">
     <div class="license-title">
       <div>QM/MM伞型采样实践</div>
-      <div>http://example.com/2026/07/06/伞型采样实践/</div>
+      <div>http://example.com/2026/07/06/us/</div>
     </div>
     <div class="license-meta">
       
